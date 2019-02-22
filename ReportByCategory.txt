@@ -1,0 +1,59 @@
+Sub ReportByCategory()
+'   Need help? Check out the README! Will answer just about all the questions you have.
+'   Written by Anthony Healey. Check license file for applicable usage.
+'   Published on GitHub 2019
+'   -----------------------------------------------------------------------------------------------
+'   Before first run, ensure you have checked the following references from the available library:
+'       1. Microsoft Excel 16.0 Object Library
+'   -----------------------------------------------------------------------------------------------
+'   Create series of calendar objects from selection
+    Dim objDictionary       As Object
+    Dim objAppointments     As Outlook.Items
+    Set objDictionary = CreateObject("Scripting.Dictionary")
+    Set objAppointments = Application.Session.PickFolder.Items
+'   Loop through each object from selection
+    Dim objAppointment      As Outlook.AppointmentItem
+    Dim strCategory         As String
+    Dim arrCategory         As Variant
+    Dim varCategory         As Variant
+    For Each objAppointment In objAppointments
+        arrCategory = Split(objAppointment.Categories, ",")
+'       Loop through each category in object
+        For Each varCategory In arrCategory
+            strCategory = Trim(varCategory)
+'           Add category to dictionary
+            If objDictionary.Exists(strCategory) Then
+'               Add to existing dictionary
+                objDictionary.Item(strCategory) = objDictionary.Item(strCategory) + objAppointment.Duration
+            Else
+'               Create new dictionary
+                objDictionary.Add strCategory, objAppointment.Duration
+            End If
+        Next
+    Next
+'   Create a new Excel window, workbook and worksheet
+    Dim objExcelApp         As Excel.Application
+    Set objExcelApp = CreateObject("Excel.Application")
+    Dim objExcelWorkbook    As Excel.Workbook
+    Set objExcelWorkbook = objExcelApp.Workbooks.Add
+    Dim objExcelWorksheet   As Excel.Worksheet
+    Set objExcelWorksheet = objExcelWorkbook.Sheets(1)
+    objExcelApp.Visible = True
+'   Write headings
+    With objExcelWorksheet
+         .Cells(1, 1) = "Color Category"
+         .Cells(1, 2) = "Total Time (min)"
+    End With
+'   Write dictionary keys and items to worksheet
+    Dim arrKey              As Variant
+    Dim arrItem             As Variant
+    Dim i                   As Long
+    Dim nLastRow            As Integer
+    arrKey = objDictionary.Keys
+    arrItem = objDictionary.Items
+    For i = LBound(arrKey) To UBound(arrKey)
+        nLastRow = objExcelWorksheet.Range("A" & objExcelWorksheet.Rows.Count).End(xlUp).Row + 1
+        objExcelWorksheet.Cells(nLastRow, 1) = arrKey(i)
+        objExcelWorksheet.Cells(nLastRow, 2) = arrItem(i)
+    Next
+End Sub
